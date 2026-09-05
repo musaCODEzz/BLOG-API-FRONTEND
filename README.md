@@ -1,12 +1,15 @@
-# DevChronicle Blog — Frontend Client
+# StackPulse — Frontend Client
 
-A modern, fast, and responsive web client built with **React**, **TypeScript**, and **Vite**, connecting directly to our live Express & MongoDB REST API.
+A modern, fast, and responsive developer publication client built with **React**, **TypeScript**, and **Vite**, connecting directly to our live Express & MongoDB REST API.
+
+> *Modern ideas, architecture & developer stories.*
 
 ---
 
 ## 🔗 Live Backend API
 - **Base URL**: [`https://blog-api-backend-mh0s.onrender.com`](https://blog-api-backend-mh0s.onrender.com)
 - **API Documentation**: [`https://blog-api-backend-mh0s.onrender.com/api-docs`](https://blog-api-backend-mh0s.onrender.com/api-docs)
+- **Primary Endpoint**: `/api/blogs`
 
 ---
 
@@ -62,7 +65,7 @@ blog-api-frontend/
 
 ## 🗺️ Learning Roadmap
 - [x] **Phase 1**: Project Setup, Git Initialization & Skeleton Inspection
-- [ ] **Phase 2**: Connecting to Live API & Fetching Posts
+- [x] **Phase 2**: Connecting to Live API & Fetching Posts
 - [ ] **Phase 3**: Component Architecture & Feed UI
 - [ ] **Phase 4**: Multi-Page Routing & Post Detail View
 - [ ] **Phase 5**: Authentication, Post Creation & Comments
