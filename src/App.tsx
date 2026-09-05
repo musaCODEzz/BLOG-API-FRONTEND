@@ -1,19 +1,8 @@
 import { useState, useEffect } from 'react';
+import type { BlogPost } from './types/blog';
+import { getBlogs } from './services/api';
+import { BlogCard } from './components/BlogCard';
 import './App.css';
-
-interface Author {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-interface BlogPost {
-  _id: string;
-  title: string;
-  content: string;
-  author?: Author;
-  createdAt: string;
-}
 
 function App() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
@@ -25,17 +14,11 @@ function App() {
       try {
         setLoading(true);
         setError(null);
-
-        const response = await fetch('https://blog-api-backend-mh0s.onrender.com/api/blogs');
-
-        if (!response.ok) {
-          throw new Error(`Server responded with status ${response.status}`);
-        }
-
-        const result = await response.json();
-        setBlogs(result.data);
+        // Call our centralized API function!
+        const data = await getBlogs();
+        setBlogs(data);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch blogs from Render');
+        setError(err.message || 'Failed to load blogs');
       } finally {
         setLoading(false);
       }
@@ -46,7 +29,7 @@ function App() {
 
   return (
     <div>
-      {/* Header with gradient title & live status indicator */}
+      {/* Brand Header */}
       <header className="blog-header">
         <div>
           <h1 className="brand-title">StackPulse</h1>
@@ -60,21 +43,21 @@ function App() {
         </div>
       </header>
 
-      {/* Loading State */}
+      {/* State 1: Loading */}
       {loading && (
         <div className="state-box">
           <p>⏳ Fetching latest stories from Render backend...</p>
         </div>
       )}
 
-      {/* Error State */}
+      {/* State 2: Error */}
       {error && (
         <div className="state-box error-box">
           <p>⚠️ <strong>Error:</strong> {error}</p>
         </div>
       )}
 
-      {/* Success State: Blog Feed */}
+      {/* State 3: Feed using our reusable BlogCard */}
       {!loading && !error && (
         <main>
           <div className="feed-header">
@@ -88,28 +71,9 @@ function App() {
             </div>
           ) : (
             <div className="blog-grid">
-              {blogs.map((blog) => {
-                const authorInitial = (blog.author?.name || 'A')[0].toUpperCase();
-                const formattedDate = new Date(blog.createdAt).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                });
-
-                return (
-                  <article key={blog._id} className="blog-card">
-                    <h3 className="card-title">{blog.title}</h3>
-                    <p className="card-content">{blog.content}</p>
-                    <footer className="card-footer">
-                      <div className="author-chip">
-                        <span className="author-avatar">{authorInitial}</span>
-                        <span className="author-name">{blog.author?.name || 'Anonymous'}</span>
-                      </div>
-                      <time dateTime={blog.createdAt}>{formattedDate}</time>
-                    </footer>
-                  </article>
-                );
-              })}
+              {blogs.map((blog) => (
+                <BlogCard key={blog._id} blog={blog} />
+              ))}
             </div>
           )}
         </main>
