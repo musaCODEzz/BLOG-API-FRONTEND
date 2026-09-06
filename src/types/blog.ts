@@ -23,3 +23,11 @@ export interface ApiResponse<T> {
     hasPrevPage: boolean;
   };
 }
+
+export interface Comment{
+    _id: string;
+    content: string;
+    blog: string;
+    author?: Author;
+    createdAt: string;
+}

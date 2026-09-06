@@ -67,5 +67,5 @@ blog-api-frontend/
 - [x] **Phase 1**: Project Setup, Git Initialization & Skeleton Inspection
 - [x] **Phase 2**: Connecting to Live API & Fetching Posts
 - [x] **Phase 3**: Component Architecture & Feed UI
-- [ ] **Phase 4**: Multi-Page Routing & Post Detail View
+- [x] **Phase 4**: Multi-Page Routing & Post Detail View
 - [ ] **Phase 5**: Authentication, Post Creation & Comments
