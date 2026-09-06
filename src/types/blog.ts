@@ -43,3 +43,17 @@ export interface AuthResponse{
     token: string;
     user: User;
 }
+
+export interface PaginationInfo{
+total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export interface PaginatedBlogs{
+    data: BlogPost[];
+    pagination: PaginationInfo;
+}

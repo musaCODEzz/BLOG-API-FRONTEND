@@ -1,18 +1,28 @@
-import type { BlogPost, ApiResponse, Comment, User, AuthResponse } from '../types/blog';
+import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs } from '../types/blog';
 
 // 1. The centralized base URL of your live Render backend
 const API_BASE_URL = 'https://blog-api-backend-mh0s.onrender.com/api';
 
 // 2. Function to fetch the list of blog posts
-export const getBlogs = async (): Promise<BlogPost[]> => {
-    const response = await fetch(`${API_BASE_URL}/blogs`);
+export const getBlogs = async (page: number = 1, limit: number = 10): Promise<PaginatedBlogs> => {
+    const response = await fetch(`${API_BASE_URL}/blogs?page=${page}&limit=${limit}`);
 
     if (!response.ok) {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
-    const result: ApiResponse<BlogPost[]> = await response.json();
-    return result.data;
+    const result = await response.json()
+    return {
+        data: result.data || [],
+        pagination: result.pagination || {
+            total: result.data?.length || 0,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+        }
+    }
 };
 
 // 3. Fetch a single blog post by MongoDB _id
