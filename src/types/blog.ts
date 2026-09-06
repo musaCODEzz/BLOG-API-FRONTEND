@@ -31,3 +31,15 @@ export interface Comment{
     author?: Author;
     createdAt: string;
 }
+
+export interface User{
+    _id: string;
+    name: string;
+    email: string;
+}
+
+export interface AuthResponse{
+    message: string;
+    token: string;
+    user: User;
+}

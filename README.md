@@ -68,4 +68,4 @@ blog-api-frontend/
 - [x] **Phase 2**: Connecting to Live API & Fetching Posts
 - [x] **Phase 3**: Component Architecture & Feed UI
 - [x] **Phase 4**: Multi-Page Routing & Post Detail View
-- [ ] **Phase 5**: Authentication, Post Creation & Comments
+- [x] **Phase 5**: Authentication, Post Creation & Comments
