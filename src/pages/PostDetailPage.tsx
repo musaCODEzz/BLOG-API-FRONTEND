@@ -43,7 +43,7 @@ export const PostDetailPage = () => {
     loadPostAndComments();
   }, [id]);
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!id || !commentText.trim() || !token) return;
 

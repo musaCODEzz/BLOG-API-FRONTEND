@@ -120,3 +120,33 @@ export const addComment = async (blogId: string, content: string, token: string)
     }
     return result;
 };
+
+// 9. Request Password Reset Token
+export const forgotPassword = async (email: string): Promise<{ message: string; resetToken?: string }> => {
+    const response = await fetch(`${API_BASE_URL}/users/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to request password reset');
+    }
+    return result;
+};
+
+// 10. Reset Password using Token
+export const resetPassword = async (token: string, password: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/users/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to reset password');
+    }
+    return result;
+};

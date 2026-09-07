@@ -41,7 +41,7 @@ export const CreatePostPage = () => {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
       setError('Title and content cannot be empty.');
