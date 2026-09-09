@@ -166,3 +166,53 @@ export const loginWithGoogle = async (credential: string): Promise<AuthResponse>
     }
     return result;
 };
+
+// 12. Update an existing Blog Post (Protected: Author only)
+export const updateBlog = async (id: string, title: string, content: string, token: string): Promise<BlogPost> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update blog post');
+    }
+    return result.data || result;
+};
+
+// 13. Delete a Blog Post (Protected: Author only)
+export const deleteBlog = async (id: string, token: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to delete blog post');
+    }
+    return result;
+};
+
+// 14. Delete a Comment (Protected: Comment author only)
+export const deleteComment = async (blogId: string, commentId: string, token: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to delete comment');
+    }
+    return result;
+};
