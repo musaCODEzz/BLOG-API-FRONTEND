@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { resetPassword } from '../services/api';
 import { PasswordInput } from '../components/PasswordInput';
+import { useAuth } from '../context/AuthContext';
 
 export const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
@@ -13,6 +14,7 @@ export const ResetPasswordPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.SubmitEvent) => {
@@ -37,6 +39,7 @@ export const ResetPasswordPage = () => {
     try {
       setLoading(true);
       await resetPassword(token, password);
+      logout(); // Clear any previous active session so the user starts fresh
       setIsSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Invalid or expired password reset token');
