@@ -51,7 +51,20 @@ const NavigationHeader = () => {
             </Link>
 
             <div className="author-chip" title={user?.email}>
-              <span className="author-avatar">{userInitial}</span>
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <span className="author-avatar">{userInitial}</span>
+              )}
               <span className="author-name">{user?.name}</span>
             </div>
 

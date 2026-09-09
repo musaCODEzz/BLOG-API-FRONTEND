@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { validateRealEmail } from '../utils/validation';
 import { PasswordInput } from '../components/PasswordInput';
@@ -10,7 +11,7 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, loginWithGoogleAuth, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // If user is already authenticated, redirect them away from the login screen
@@ -19,6 +20,23 @@ export const LoginPage = () => {
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      if (!credentialResponse.credential) {
+        setError('No Google credential returned.');
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      await loginWithGoogleAuth(credentialResponse.credential);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Failed to authenticate with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -128,6 +146,27 @@ export const LoginPage = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0' }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+          <span style={{ padding: '0 0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            or continue with
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+        </div>
+
+        {/* Google Sign-In Button */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Google sign-in was dismissed or failed')}
+            theme="filled_black"
+            shape="pill"
+            size="large"
+            width="100%"
+          />
+        </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '1.5rem' }}>
           Don't have an account?{' '}

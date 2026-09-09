@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { User } from '../types/blog';
-import { loginUser, registerUser } from '../services/api';
+import { loginUser, registerUser, loginWithGoogle } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogleAuth: (credential: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -39,7 +40,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await login(email, password);
   };
 
-  // 4. Logout function: clears state and localStorage
+  // 4. Google Login: calls backend google-login, saves JWT and user
+  const loginWithGoogleAuth = async (credential: string) => {
+    const data = await loginWithGoogle(credential);
+    setToken(data.token);
+    setUser(data.user);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+  };
+
+  // 5. Logout function: clears state and localStorage
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -54,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         login,
         register,
+        loginWithGoogleAuth,
         logout,
         isAuthenticated: !!token,
       }}

@@ -1,7 +1,8 @@
 import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs } from '../types/blog';
 
-// 1. The centralized base URL of your live Render backend
-const API_BASE_URL = 'https://blog-api-backend-mh0s.onrender.com/api';
+// 1. The centralized base URL of your backend (supports local dev & production)
+const RAW_URL = import.meta.env.VITE_API_URL || 'https://blog-api-backend-mh0s.onrender.com';
+const API_BASE_URL = RAW_URL.endsWith('/api') ? RAW_URL : `${RAW_URL.replace(/\/$/, '')}/api`;
 
 // 2. Function to fetch the list of blog posts
 export const getBlogs = async (page: number = 1, limit: number = 10): Promise<PaginatedBlogs> => {
@@ -147,6 +148,21 @@ export const resetPassword = async (token: string, password: string): Promise<{ 
     const result = await response.json();
     if (!response.ok) {
         throw new Error(result.error || result.message || 'Failed to reset password');
+    }
+    return result;
+};
+
+// 11. Authenticate with Google OAuth ID Token
+export const loginWithGoogle = async (credential: string): Promise<AuthResponse> => {
+    const response = await fetch(`${API_BASE_URL}/users/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Google login failed');
     }
     return result;
 };
