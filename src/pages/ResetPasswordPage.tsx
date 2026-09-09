@@ -5,9 +5,8 @@ import { PasswordInput } from '../components/PasswordInput';
 
 export const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
-  const tokenFromUrl = searchParams.get('token') || '';
+  const token = searchParams.get('token');
 
-  const [token, setToken] = useState(tokenFromUrl);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,8 +19,8 @@ export const ResetPasswordPage = () => {
     e.preventDefault();
     setError(null);
 
-    if (!token.trim()) {
-      setError('A reset token is required.');
+    if (!token) {
+      setError('Invalid or missing reset token.');
       return;
     }
 
@@ -37,10 +36,10 @@ export const ResetPasswordPage = () => {
 
     try {
       setLoading(true);
-      await resetPassword(token.trim(), password);
+      await resetPassword(token, password);
       setIsSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password. The token may be invalid or expired.');
+      setError(err.message || 'Invalid or expired password reset token');
     } finally {
       setLoading(false);
     }
@@ -60,16 +59,47 @@ export const ResetPasswordPage = () => {
           Set New Password
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-          Create a secure new password for your account.
+          Choose a secure new password of at least 6 characters.
         </p>
 
-        {error && (
-          <div className="state-box error-box" style={{ padding: '0.75rem 1rem', marginBottom: '1.25rem', borderRadius: '6px' }}>
-            <p style={{ fontSize: '0.85rem' }}>{error}</p>
+        {/* Missing Token Warning Banner */}
+        {!token ? (
+          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <div
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '1rem',
+                borderRadius: '8px',
+                color: '#fca5a5',
+                fontSize: '0.9rem',
+                lineHeight: 1.5,
+                marginBottom: '1.5rem',
+              }}
+            >
+              ⚠️ <strong>Invalid or missing reset token.</strong>
+              <br />
+              Please click the link sent to your email or request a new one.
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              style={{
+                width: '100%',
+                padding: '0.8rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'var(--accent-gradient)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+              }}
+            >
+              Request New Reset Link →
+            </button>
           </div>
-        )}
-
-        {isSuccess ? (
+        ) : isSuccess ? (
           <div>
             <div
               style={{
@@ -81,11 +111,10 @@ export const ResetPasswordPage = () => {
                 fontSize: '0.9rem',
                 lineHeight: 1.5,
                 marginBottom: '1.5rem',
+                textAlign: 'center',
               }}
             >
-              <p style={{ margin: 0, fontWeight: 600 }}>
-                🎉 Your password has been successfully reset!
-              </p>
+              🎉 <strong>Your password has been reset successfully!</strong>
             </div>
 
             <button
@@ -108,29 +137,9 @@ export const ResetPasswordPage = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {!tokenFromUrl && (
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-                  Reset Token
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  placeholder="Paste reset token here"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.85rem',
-                    fontFamily: 'var(--font-mono)',
-                    outline: 'none',
-                  }}
-                />
+            {error && (
+              <div className="state-box error-box" style={{ padding: '0.75rem 1rem', borderRadius: '6px' }}>
+                <p style={{ fontSize: '0.85rem' }}>{error}</p>
               </div>
             )}
 
@@ -173,7 +182,7 @@ export const ResetPasswordPage = () => {
                 marginTop: '0.5rem',
               }}
             >
-              {loading ? 'Updating Password...' : 'Set New Password'}
+              {loading ? 'Updating Password...' : 'Update Password'}
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '1rem', marginBottom: 0 }}>

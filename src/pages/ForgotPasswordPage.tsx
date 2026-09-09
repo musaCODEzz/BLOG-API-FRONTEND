@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { forgotPassword } from '../services/api';
 import { validateRealEmail } from '../utils/validation';
 
@@ -7,15 +7,13 @@ export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successInfo, setSuccessInfo] = useState<{ message: string; resetToken?: string } | null>(null);
-
-  const navigate = useNavigate();
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
 
-    // 1. Client-side Real Email Validation
+    // Client-side Real Email Validation
     const validation = validateRealEmail(email);
     if (!validation.isValid) {
       setError(validation.error || 'Please enter a valid email address.');
@@ -24,8 +22,8 @@ export const ForgotPasswordPage = () => {
 
     try {
       setLoading(true);
-      const res = await forgotPassword(email.trim());
-      setSuccessInfo(res);
+      await forgotPassword(email.trim());
+      setSubmitted(true);
     } catch (err: any) {
       setError(err.message || 'Failed to request password reset');
     } finally {
@@ -44,10 +42,10 @@ export const ForgotPasswordPage = () => {
         }}
       >
         <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-          Reset Password
+          Reset Your Password
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-          Enter the real email address associated with your account.
+          Enter your account email and we'll send you a recovery link.
         </p>
 
         {error && (
@@ -56,69 +54,41 @@ export const ForgotPasswordPage = () => {
           </div>
         )}
 
-        {successInfo ? (
-          <div>
+        {submitted ? (
+          <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📬</div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+              Check your inbox!
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+              If an account with <strong>{email}</strong> exists, we've sent a password reset link. The link is valid for <strong>15 minutes</strong>.
+            </p>
             <div
               style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                padding: '1rem',
+                background: 'var(--bg-secondary)',
+                padding: '0.85rem',
                 borderRadius: '8px',
-                color: '#6ee7b7',
-                fontSize: '0.9rem',
-                lineHeight: 1.5,
+                border: '1px solid var(--border-subtle)',
                 marginBottom: '1.5rem',
+                textAlign: 'left',
               }}
             >
-              <p style={{ margin: 0, fontWeight: 600 }}>{successInfo.message}</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                💡 <strong>Tip:</strong> Don't see the email? Check your spam or promotions folder, or verify your email address.
+              </p>
             </div>
-
-            {successInfo.resetToken && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                  Your password reset token has been generated:
-                </p>
-                <div
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-primary)',
-                    wordBreak: 'break-all',
-                    border: '1px solid var(--border-subtle)',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  {successInfo.resetToken}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => navigate(`/reset-password?token=${successInfo.resetToken}`)}
-                  style={{
-                    width: '100%',
-                    padding: '0.8rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: 'var(--accent-gradient)',
-                    color: 'white',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Continue to Set New Password →
-                </button>
-              </div>
-            )}
-
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-              <Link to="/login" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textDecoration: 'none' }}>
-                ← Return to Sign In
-              </Link>
-            </div>
+            <Link
+              to="/login"
+              style={{
+                display: 'inline-block',
+                color: 'var(--accent-primary)',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+              }}
+            >
+              ← Back to Sign In
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
