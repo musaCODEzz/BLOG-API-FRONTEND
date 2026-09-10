@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { BlogPost, Comment } from '../types/blog';
-import { getBlogPostById, getCommentsByBlogId, addComment, deleteBlog, deleteComment, updateComment } from '../services/api';
+import { getBlogPostById, getCommentsByBlogId, addComment, deleteBlog, deleteComment, updateComment, likeBlogPost } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export const PostDetailPage = () => {
@@ -31,6 +31,14 @@ export const PostDetailPage = () => {
   const [updatingComment, setUpdatingComment] = useState(false);
   const [editCommentError, setEditCommentError] = useState<string | null>(null);
 
+  // Likes & Engagement state
+  const [likesCount, setLikesCount] = useState<number>(0);
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [isLiking, setIsLiking] = useState<boolean>(false);
+  const [isHeartPopping, setIsHeartPopping] = useState<boolean>(false);
+  const [likeTooltip, setLikeTooltip] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+
   useEffect(() => {
     if (!id) return;
 
@@ -46,6 +54,16 @@ export const PostDetailPage = () => {
 
         setPost(postData);
         setComments(commentsData);
+        setLikesCount(postData.likesCount || 0);
+
+        if (user && postData.likes) {
+          const userLiked = (postData.likes as any[]).some(
+            (l) => (typeof l === 'string' ? l === user._id : l?._id === user._id)
+          );
+          setIsLiked(userLiked);
+        } else {
+          setIsLiked(false);
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load post');
       } finally {
@@ -54,7 +72,7 @@ export const PostDetailPage = () => {
     };
 
     loadPostAndComments();
-  }, [id]);
+  }, [id, user]);
 
   const handleDeletePost = async () => {
     if (!id || !token) return;
@@ -125,6 +143,52 @@ export const PostDetailPage = () => {
       setEditCommentError(err.message || 'Failed to update comment');
     } finally {
       setUpdatingComment(false);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!isAuthenticated || !token || !id) {
+      setLikeTooltip('Please sign in to like this story! ❤️');
+      setTimeout(() => setLikeTooltip(null), 4000);
+      return;
+    }
+
+    if (isLiking) return;
+
+    // Trigger bounce micro-animation
+    setIsHeartPopping(true);
+    setTimeout(() => setIsHeartPopping(false), 350);
+
+    // Optimistic UI update
+    const prevIsLiked = isLiked;
+    const prevLikesCount = likesCount;
+    const nextIsLiked = !isLiked;
+    const nextLikesCount = nextIsLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+
+    setIsLiked(nextIsLiked);
+    setLikesCount(nextLikesCount);
+    setIsLiking(true);
+
+    try {
+      const res = await likeBlogPost(id, token);
+      setIsLiked(res.isLiked);
+      setLikesCount(res.likesCount);
+      setPost((prev) => (prev ? { ...prev, likesCount: res.likesCount } : prev));
+    } catch (err: any) {
+      // Rollback on error
+      setIsLiked(prevIsLiked);
+      setLikesCount(prevLikesCount);
+      alert(err.message || 'Failed to update like. Please try again.');
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleShareArticle = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
     }
   };
 
@@ -210,9 +274,14 @@ export const PostDetailPage = () => {
               <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                 {post.author?.name || 'Anonymous'}
               </div>
-              <time style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Published on {formattedDate}
-              </time>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.15rem' }}>
+                <time style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Published on {formattedDate}
+                </time>
+                <span style={{ fontSize: '0.8rem', color: isLiked ? '#f43f5e' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {isLiked ? '❤️' : '🤍'} {likesCount} {likesCount === 1 ? 'like' : 'likes'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -332,12 +401,59 @@ export const PostDetailPage = () => {
       </header>
 
       {/* Full Article Content */}
-      <div style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--text-secondary)', whiteSpace: 'pre-line', marginBottom: '3rem' }}>
+      <div style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--text-secondary)', whiteSpace: 'pre-line', marginBottom: '2.5rem' }}>
         {post.content}
       </div>
 
+      {/* Article Engagement Bar */}
+      <div className="engagement-bar">
+        <div className="engagement-actions">
+          <button
+            type="button"
+            onClick={handleToggleLike}
+            disabled={isLiking}
+            className={`like-button ${isLiked ? 'liked' : ''}`}
+            title={isAuthenticated ? (isLiked ? 'Unlike this story' : 'Like this story') : 'Sign in to like'}
+          >
+            <span className={`like-icon ${isHeartPopping ? 'heart-popping' : ''}`} style={{ fontSize: '1.15rem' }}>
+              {isLiked ? '❤️' : '🤍'}
+            </span>
+            <span>{likesCount}</span>
+          </button>
+
+          <a
+            href="#discussion"
+            className="engagement-icon-btn"
+            title="Jump to discussion"
+          >
+            <span>💬</span>
+            <span>{comments.length} {comments.length === 1 ? 'comment' : 'comments'}</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={handleShareArticle}
+            className="engagement-icon-btn"
+            title="Copy story link"
+          >
+            <span>{copiedLink ? '✅' : '🔗'}</span>
+            <span>{copiedLink ? 'Link Copied!' : 'Share'}</span>
+          </button>
+        </div>
+
+        {/* Unauthenticated notification hint */}
+        {likeTooltip && (
+          <div style={{ fontSize: '0.85rem', color: '#f43f5e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>{likeTooltip}</span>
+            <Link to="/login" style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'underline' }}>
+              Sign In
+            </Link>
+          </div>
+        )}
+      </div>
+
       {/* Discussion & Comments Section */}
-      <section style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '2.5rem' }}>
+      <section id="discussion" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '2.5rem' }}>
         <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
           Discussion ({comments.length})
         </h3>

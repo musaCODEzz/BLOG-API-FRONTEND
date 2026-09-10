@@ -10,6 +10,14 @@ export interface BlogPost{
     author?: Author;
     createdAt: string;
     updatedAt?: string;
+    likes?: string[];
+    likesCount?: number;
+}
+
+export interface LikeResponse {
+    message: string;
+    isLiked: boolean;
+    likesCount: number;
 }
 
 export interface ApiResponse<T> {

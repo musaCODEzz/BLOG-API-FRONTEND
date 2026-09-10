@@ -29,7 +29,24 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
           <span className="author-avatar">{authorInitial}</span>
           <span className="author-name">{blog.author?.name || 'Anonymous'}</span>
         </div>
-        <time dateTime={blog.createdAt}>{formattedDate}</time>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {(blog.likesCount !== undefined && blog.likesCount > 0) && (
+            <span 
+              title={`${blog.likesCount} ${blog.likesCount === 1 ? 'like' : 'likes'}`}
+              style={{ 
+                fontSize: '0.8rem', 
+                color: '#f43f5e', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '0.25rem',
+                fontWeight: 600,
+              }}
+            >
+              ❤️ {blog.likesCount}
+            </span>
+          )}
+          <time dateTime={blog.createdAt}>{formattedDate}</time>
+        </div>
       </footer>
     </article>
   );

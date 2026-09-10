@@ -1,12 +1,19 @@
-import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs } from '../types/blog';
+import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs, LikeResponse } from '../types/blog';
 
 // 1. The centralized base URL of your backend (supports local dev & production)
 const RAW_URL = import.meta.env.VITE_API_URL || 'https://blog-api-backend-mh0s.onrender.com';
 const API_BASE_URL = RAW_URL.endsWith('/api') ? RAW_URL : `${RAW_URL.replace(/\/$/, '')}/api`;
 
 // 2. Function to fetch the list of blog posts
-export const getBlogs = async (page: number = 1, limit: number = 10): Promise<PaginatedBlogs> => {
-    const response = await fetch(`${API_BASE_URL}/blogs?page=${page}&limit=${limit}`);
+export const getBlogs = async (page: number = 1, limit: number = 10, sort?: string): Promise<PaginatedBlogs> => {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    });
+    if (sort) {
+        params.append('sort', sort);
+    }
+    const response = await fetch(`${API_BASE_URL}/blogs?${params.toString()}`);
 
     if (!response.ok) {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -238,4 +245,24 @@ export const updateComment = async (
         throw new Error(result.error || result.message || 'Failed to update comment');
     }
     return result.comment || result.data || result;
+};
+
+// 16. Toggle Like on a Blog Post (Protected: Logged-in user)
+export const likeBlogPost = async (
+    id: string,
+    token: string
+): Promise<LikeResponse> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/${id}/like`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to toggle like');
+    }
+    return result;
 };

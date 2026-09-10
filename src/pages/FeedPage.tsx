@@ -7,6 +7,7 @@ export const FeedPage = () => {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [page, setPage] = useState<number>(1);
+  const [sortBy, setSortBy] = useState<string>(''); // '' for latest, '-likesCount' for popular
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,8 +16,8 @@ export const FeedPage = () => {
       try {
         setLoading(true);
         setError(null);
-        // Fetch specific page from Render backend
-        const response = await getBlogs(page, 10);
+        // Fetch specific page and sort from Render backend
+        const response = await getBlogs(page, 10, sortBy || undefined);
         setBlogs(response.data);
         setPagination(response.pagination);
       } catch (err: any) {
@@ -27,7 +28,7 @@ export const FeedPage = () => {
     };
 
     fetchBlogs();
-  }, [page]); // Re-runs automatically whenever `page` changes!
+  }, [page, sortBy]); // Re-runs automatically whenever page or sortBy changes!
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -52,12 +53,44 @@ export const FeedPage = () => {
 
   return (
     <main>
-      <div className="feed-header">
-        <h2 className="feed-title">Recent Articles</h2>
-        {/* Shows total posts from MongoDB database! */}
-        <span className="posts-count">
-          {pagination ? `${pagination.total} total posts` : `${blogs.length} posts`}
-        </span>
+      <div className="feed-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 className="feed-title">
+            {sortBy === '-likesCount' ? '🔥 Most Popular Stories' : 'Recent Articles'}
+          </h2>
+          {/* Shows total posts from MongoDB database! */}
+          <span className="posts-count">
+            {pagination ? `${pagination.total} total posts` : `${blogs.length} posts`}
+          </span>
+        </div>
+
+        {/* Sort Switcher: Latest vs Popular */}
+        <div className="feed-tabs">
+          <button
+            type="button"
+            className={`feed-tab ${sortBy === '' ? 'active' : ''}`}
+            onClick={() => {
+              if (sortBy !== '') {
+                setSortBy('');
+                setPage(1);
+              }
+            }}
+          >
+            <span>⏱️</span> Latest
+          </button>
+          <button
+            type="button"
+            className={`feed-tab ${sortBy === '-likesCount' ? 'active' : ''}`}
+            onClick={() => {
+              if (sortBy !== '-likesCount') {
+                setSortBy('-likesCount');
+                setPage(1);
+              }
+            }}
+          >
+            <span>🔥</span> Popular
+          </button>
+        </div>
       </div>
 
       {blogs.length === 0 ? (
