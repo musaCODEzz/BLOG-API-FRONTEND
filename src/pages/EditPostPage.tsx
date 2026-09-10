@@ -12,6 +12,7 @@ export const EditPostPage = () => {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export const EditPostPage = () => {
         setPost(data);
         setTitle(data.title);
         setContent(data.content);
+        setTagsInput(data.tags && data.tags.length > 0 ? data.tags.join(', ') : '');
       } catch (err: any) {
         setError(err.message || 'Failed to load story for editing');
       } finally {
@@ -120,6 +122,11 @@ export const EditPostPage = () => {
     );
   }
 
+  const parsedTags = tagsInput
+    .split(',')
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!id || !title.trim() || !content.trim()) {
@@ -130,7 +137,7 @@ export const EditPostPage = () => {
     try {
       setSaving(true);
       setError(null);
-      await updateBlog(id, title.trim(), content.trim(), token);
+      await updateBlog(id, title.trim(), content.trim(), token, parsedTags);
       // Navigate back to the updated post
       navigate(`/blogs/${id}`);
     } catch (err: any) {
@@ -228,6 +235,40 @@ export const EditPostPage = () => {
                 resize: 'vertical',
               }}
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+              Tags & Topics
+            </label>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Separate topics with commas (e.g. <code>react, typescript, architecture</code>).
+            </p>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="e.g. react, typescript, performance, devops"
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                fontSize: '0.95rem',
+                outline: 'none',
+              }}
+            />
+            {parsedTags.length > 0 && (
+              <div className="tag-preview-group">
+                {parsedTags.map((tag, idx) => (
+                  <span key={idx} className="tag-pill">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>

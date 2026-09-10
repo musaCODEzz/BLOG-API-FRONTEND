@@ -1,17 +1,20 @@
-import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs, LikeResponse } from '../types/blog';
+import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs, LikeResponse, TagCount } from '../types/blog';
 
 // 1. The centralized base URL of your backend (supports local dev & production)
 const RAW_URL = import.meta.env.VITE_API_URL || 'https://blog-api-backend-mh0s.onrender.com';
 const API_BASE_URL = RAW_URL.endsWith('/api') ? RAW_URL : `${RAW_URL.replace(/\/$/, '')}/api`;
 
-// 2. Function to fetch the list of blog posts
-export const getBlogs = async (page: number = 1, limit: number = 10, sort?: string): Promise<PaginatedBlogs> => {
+// 2. Function to fetch the list of blog posts (supports pagination, sort, and tag filtering)
+export const getBlogs = async (page: number = 1, limit: number = 10, sort?: string, tag?: string): Promise<PaginatedBlogs> => {
     const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
     });
     if (sort) {
         params.append('sort', sort);
+    }
+    if (tag) {
+        params.append('tag', tag);
     }
     const response = await fetch(`${API_BASE_URL}/blogs?${params.toString()}`);
 
@@ -93,21 +96,21 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
 };
 
 // publish a new blog post (Protected: Requires Bearer Token)
-export const createBlog = async (title: string, content: string, token: string): Promise<BlogPost> => {
+export const createBlog = async (title: string, content: string, token: string, tags?: string[]): Promise<BlogPost> => {
     const response = await fetch(`${API_BASE_URL}/blogs`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({ title, content, tags: tags || [] }),
     });
 
     const result = await response.json();
     if (!response.ok) {
         throw new Error(result.error || result.message || 'Failed to create blog post');
     }
-    return result;
+    return result.data || result;
 };
 
 //Add a Comment (Protected: Requires Bearer Token)
@@ -175,14 +178,14 @@ export const loginWithGoogle = async (credential: string): Promise<AuthResponse>
 };
 
 // 12. Update an existing Blog Post (Protected: Author only)
-export const updateBlog = async (id: string, title: string, content: string, token: string): Promise<BlogPost> => {
+export const updateBlog = async (id: string, title: string, content: string, token: string, tags?: string[]): Promise<BlogPost> => {
     const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({ title, content, ...(tags !== undefined ? { tags } : {}) }),
     });
 
     const result = await response.json();
@@ -265,4 +268,16 @@ export const likeBlogPost = async (
         throw new Error(result.error || result.message || 'Failed to toggle like');
     }
     return result;
+};
+
+// 17. Fetch Popular Tags with post counts
+export const getPopularTags = async (limit: number = 20): Promise<TagCount[]> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/tags?limit=${limit}`);
+
+    if (!response.ok) {
+        throw new Error(`Failed to load tags: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.tags || [];
 };

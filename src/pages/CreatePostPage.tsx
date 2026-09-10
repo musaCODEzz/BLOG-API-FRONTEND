@@ -6,6 +6,7 @@ import { createBlog } from '../services/api';
 export const CreatePostPage = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +42,11 @@ export const CreatePostPage = () => {
     );
   }
 
+  const parsedTags = tagsInput
+    .split(',')
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
@@ -51,7 +57,7 @@ export const CreatePostPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const newBlog = await createBlog(title, content, token);
+      const newBlog = await createBlog(title, content, token, parsedTags);
       // Navigate to the newly created blog post!
       navigate(`/blogs/${newBlog._id}`);
     } catch (err: any) {
@@ -149,6 +155,40 @@ export const CreatePostPage = () => {
                 resize: 'vertical',
               }}
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+              Tags & Topics (optional)
+            </label>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              Separate topics with commas (e.g. <code>react, typescript, architecture</code>).
+            </p>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="e.g. react, typescript, nodejs, devops"
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                fontSize: '0.95rem',
+                outline: 'none',
+              }}
+            />
+            {parsedTags.length > 0 && (
+              <div className="tag-preview-group">
+                {parsedTags.map((tag, idx) => (
+                  <span key={idx} className="tag-pill">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>

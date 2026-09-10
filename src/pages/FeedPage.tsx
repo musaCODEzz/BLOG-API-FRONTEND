@@ -1,23 +1,42 @@
 import { useState, useEffect } from 'react';
-import type { BlogPost, PaginationInfo } from '../types/blog';
-import { getBlogs } from '../services/api';
+import { useSearchParams } from 'react-router-dom';
+import type { BlogPost, PaginationInfo, TagCount } from '../types/blog';
+import { getBlogs, getPopularTags } from '../services/api';
 import { BlogCard } from '../components/BlogCard';
 
 export const FeedPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTag = searchParams.get('tag') || '';
+
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [popularTags, setPopularTags] = useState<TagCount[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [page, setPage] = useState<number>(1);
   const [sortBy, setSortBy] = useState<string>(''); // '' for latest, '-likesCount' for popular
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch popular tags on mount
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const tags = await getPopularTags();
+        setPopularTags(tags);
+      } catch {
+        // Fallback silently if tags endpoint returns empty or fails
+      }
+    };
+    fetchTags();
+  }, []);
+
+  // Fetch blogs whenever page, sortBy, or activeTag changes
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
         setError(null);
-        // Fetch specific page and sort from Render backend
-        const response = await getBlogs(page, 10, sortBy || undefined);
+        // Fetch specific page, sort, and tag from Render backend
+        const response = await getBlogs(page, 10, sortBy || undefined, activeTag || undefined);
         setBlogs(response.data);
         setPagination(response.pagination);
       } catch (err: any) {
@@ -28,35 +47,34 @@ export const FeedPage = () => {
     };
 
     fetchBlogs();
-  }, [page, sortBy]); // Re-runs automatically whenever page or sortBy changes!
+  }, [page, sortBy, activeTag]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading) {
-    return (
-      <div className="state-box">
-        <p>⏳ Fetching page {page} from Render backend...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="state-box error-box">
-        <p>⚠️ <strong>Error:</strong> {error}</p>
-      </div>
-    );
-  }
+  const handleSelectTag = (tag: string | null) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (tag) {
+      nextParams.set('tag', tag);
+    } else {
+      nextParams.delete('tag');
+    }
+    setSearchParams(nextParams);
+    setPage(1);
+  };
 
   return (
     <main>
       <div className="feed-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 className="feed-title">
-            {sortBy === '-likesCount' ? '🔥 Most Popular Stories' : 'Recent Articles'}
+            {activeTag 
+              ? `Articles in #${activeTag}` 
+              : sortBy === '-likesCount' 
+                ? '🔥 Most Popular Stories' 
+                : 'Recent Articles'}
           </h2>
           {/* Shows total posts from MongoDB database! */}
           <span className="posts-count">
@@ -93,9 +111,80 @@ export const FeedPage = () => {
         </div>
       </div>
 
-      {blogs.length === 0 ? (
+      {/* Popular Topics Bar */}
+      {popularTags.length > 0 && (
+        <div className="popular-tags-bar">
+          <button
+            type="button"
+            className={`topic-chip ${!activeTag ? 'active' : ''}`}
+            onClick={() => handleSelectTag(null)}
+          >
+            <span>🌐</span> All Topics
+          </button>
+          {popularTags.map(({ tag, count }) => (
+            <button
+              key={tag}
+              type="button"
+              className={`topic-chip ${activeTag.toLowerCase() === tag.toLowerCase() ? 'active' : ''}`}
+              onClick={() => handleSelectTag(activeTag.toLowerCase() === tag.toLowerCase() ? null : tag)}
+            >
+              <span>#{tag}</span>
+              <span className="topic-count">({count})</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Active Tag Filter Banner */}
+      {activeTag && (
+        <div className="active-filter-banner">
+          <span>
+            Showing stories tagged with <strong style={{ color: 'var(--accent-primary)' }}>#{activeTag}</strong>
+          </span>
+          <button
+            type="button"
+            className="clear-filter-btn"
+            onClick={() => handleSelectTag(null)}
+          >
+            ✕ Clear Filter
+          </button>
+        </div>
+      )}
+
+      {loading ? (
         <div className="state-box">
-          <p>No blog posts found. Be the first to create one!</p>
+          <p>⏳ Fetching stories from Render backend...</p>
+        </div>
+      ) : error ? (
+        <div className="state-box error-box">
+          <p>⚠️ <strong>Error:</strong> {error}</p>
+        </div>
+      ) : blogs.length === 0 ? (
+        <div className="state-box">
+          <p>
+            {activeTag
+              ? `No blog posts found tagged with #${activeTag}.`
+              : 'No blog posts found. Be the first to create one!'}
+          </p>
+          {activeTag && (
+            <button
+              type="button"
+              onClick={() => handleSelectTag(null)}
+              style={{
+                marginTop: '1rem',
+                padding: '0.45rem 1rem',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--accent-primary)',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.85rem',
+              }}
+            >
+              View All Topics
+            </button>
+          )}
         </div>
       ) : (
         <>

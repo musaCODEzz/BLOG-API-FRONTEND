@@ -24,6 +24,21 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
         <p className="card-content">{blog.content}</p>
       </Link>
 
+      {blog.tags && blog.tags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.85rem' }}>
+          {blog.tags.map((tag) => (
+            <Link
+              key={tag}
+              to={`/?tag=${encodeURIComponent(tag)}`}
+              className="tag-pill"
+              onClick={(e) => e.stopPropagation()}
+            >
+              #{tag}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <footer className="card-footer">
         <div className="author-chip">
           <span className="author-avatar">{authorInitial}</span>

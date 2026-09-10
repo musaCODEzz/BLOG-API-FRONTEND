@@ -401,9 +401,25 @@ export const PostDetailPage = () => {
       </header>
 
       {/* Full Article Content */}
-      <div style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--text-secondary)', whiteSpace: 'pre-line', marginBottom: '2.5rem' }}>
+      <div style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--text-secondary)', whiteSpace: 'pre-line', marginBottom: '2rem' }}>
         {post.content}
       </div>
+
+      {/* Article Tags */}
+      {post.tags && post.tags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2.5rem' }}>
+          {post.tags.map((tag) => (
+            <Link
+              key={tag}
+              to={`/?tag=${encodeURIComponent(tag)}`}
+              className="tag-pill"
+              style={{ fontSize: '0.85rem', padding: '0.3rem 0.75rem' }}
+            >
+              #{tag}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Article Engagement Bar */}
       <div className="engagement-bar">

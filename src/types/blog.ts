@@ -12,12 +12,22 @@ export interface BlogPost{
     updatedAt?: string;
     likes?: string[];
     likesCount?: number;
+    tags?: string[];
 }
 
 export interface LikeResponse {
     message: string;
     isLiked: boolean;
     likesCount: number;
+}
+
+export interface TagCount {
+    tag: string;
+    count: number;
+}
+
+export interface PopularTagsResponse {
+    tags: TagCount[];
 }
 
 export interface ApiResponse<T> {
