@@ -30,6 +30,7 @@ export interface Comment{
     blog: string;
     author?: Author;
     createdAt: string;
+    updatedAt?: string;
 }
 
 export interface User{

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { BlogPost, Comment } from '../types/blog';
-import { getBlogPostById, getCommentsByBlogId, addComment, deleteBlog, deleteComment } from '../services/api';
+import { getBlogPostById, getCommentsByBlogId, addComment, deleteBlog, deleteComment, updateComment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export const PostDetailPage = () => {
@@ -24,6 +24,12 @@ export const PostDetailPage = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  // Comment edit state
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [updatingComment, setUpdatingComment] = useState(false);
+  const [editCommentError, setEditCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -80,6 +86,45 @@ export const PostDetailPage = () => {
       alert(err.message || 'Failed to delete comment');
     } finally {
       setDeletingCommentId(null);
+    }
+  };
+
+  const handleStartEditComment = (comment: Comment) => {
+    setEditingCommentId(comment._id);
+    setEditingCommentText(comment.content);
+    setEditCommentError(null);
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText('');
+    setEditCommentError(null);
+  };
+
+  const handleSaveEditComment = async (commentId: string) => {
+    if (!id || !token || !editingCommentText.trim()) return;
+
+    try {
+      setUpdatingComment(true);
+      setEditCommentError(null);
+      const updated = await updateComment(id, commentId, editingCommentText.trim(), token);
+      setComments((prev) =>
+        prev.map((c) =>
+          c._id === commentId
+            ? {
+                ...c,
+                content: updated?.content || editingCommentText.trim(),
+                updatedAt: updated?.updatedAt || new Date().toISOString(),
+              }
+            : c
+        )
+      );
+      setEditingCommentId(null);
+      setEditingCommentText('');
+    } catch (err: any) {
+      setEditCommentError(err.message || 'Failed to update comment');
+    } finally {
+      setUpdatingComment(false);
     }
   };
 
@@ -392,6 +437,7 @@ export const PostDetailPage = () => {
               const isCommentAuthor = Boolean(
                 user && c.author && (user._id === c.author._id || user._id === (c.author as any))
               );
+              const isEditing = editingCommentId === c._id;
 
               return (
                 <div 
@@ -410,36 +456,132 @@ export const PostDetailPage = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span style={{ color: 'var(--text-muted)' }}>
                         {new Date(c.createdAt).toLocaleDateString()}
+                        {c.updatedAt && c.updatedAt !== c.createdAt && (
+                          <span style={{ fontStyle: 'italic', marginLeft: '0.35rem', fontSize: '0.75rem' }}>(edited)</span>
+                        )}
                       </span>
-                      {isCommentAuthor && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteComment(c._id)}
-                          disabled={deletingCommentId === c._id}
-                          title="Delete your comment"
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer',
-                            padding: '0.2rem 0.4rem',
-                            borderRadius: '4px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.2rem',
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-                          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
-                        >
-                          {deletingCommentId === c._id ? 'Deleting...' : '🗑️ Delete'}
-                        </button>
+                      {isCommentAuthor && !isEditing && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditComment(c)}
+                            title="Edit your comment"
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-muted)',
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              padding: '0.2rem 0.4rem',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.2rem',
+                              transition: 'color 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary, #6366f1)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(c._id)}
+                            disabled={deletingCommentId === c._id}
+                            title="Delete your comment"
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-muted)',
+                              fontSize: '0.8rem',
+                              cursor: deletingCommentId === c._id ? 'not-allowed' : 'pointer',
+                              padding: '0.2rem 0.4rem',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.2rem',
+                              transition: 'color 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                          >
+                            {deletingCommentId === c._id ? 'Deleting...' : '🗑️ Delete'}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
-                  <p style={{ color: 'var(--text-primary)', margin: 0, fontSize: '0.95rem' }}>
-                    {c.content}
-                  </p>
+
+                  {isEditing ? (
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <textarea
+                        value={editingCommentText}
+                        onChange={(e) => setEditingCommentText(e.target.value)}
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          background: 'var(--bg-secondary, #1e293b)',
+                          border: '1px solid var(--border-subtle, #334155)',
+                          borderRadius: '6px',
+                          color: 'var(--text-primary, #f8fafc)',
+                          fontFamily: 'inherit',
+                          fontSize: '0.95rem',
+                          resize: 'vertical',
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                          lineHeight: 1.5,
+                        }}
+                        placeholder="Edit your comment..."
+                        disabled={updatingComment}
+                      />
+                      {editCommentError && (
+                        <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: '0.4rem 0' }}>
+                          ⚠️ {editCommentError}
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          onClick={handleCancelEditComment}
+                          disabled={updatingComment}
+                          style={{
+                            padding: '0.4rem 0.85rem',
+                            background: 'transparent',
+                            border: '1px solid var(--border-subtle)',
+                            color: 'var(--text-secondary)',
+                            borderRadius: '6px',
+                            cursor: updatingComment ? 'not-allowed' : 'pointer',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEditComment(c._id)}
+                          disabled={updatingComment || !editingCommentText.trim()}
+                          style={{
+                            padding: '0.4rem 0.85rem',
+                            background: 'var(--accent-gradient, #6366f1)',
+                            border: 'none',
+                            color: '#ffffff',
+                            borderRadius: '6px',
+                            cursor: updatingComment || !editingCommentText.trim() ? 'not-allowed' : 'pointer',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            opacity: updatingComment || !editingCommentText.trim() ? 0.6 : 1,
+                          }}
+                        >
+                          {updatingComment ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p style={{ color: 'var(--text-primary)', margin: 0, fontSize: '0.95rem', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                      {c.content}
+                    </p>
+                  )}
                 </div>
               );
             })}

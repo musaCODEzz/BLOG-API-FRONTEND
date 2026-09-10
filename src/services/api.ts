@@ -216,3 +216,26 @@ export const deleteComment = async (blogId: string, commentId: string, token: st
     }
     return result;
 };
+
+// 15. Update a Comment (Protected: Comment author only)
+export const updateComment = async (
+    blogId: string,
+    commentId: string,
+    content: string,
+    token: string
+): Promise<Comment> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/comments/${commentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update comment');
+    }
+    return result.comment || result.data || result;
+};
