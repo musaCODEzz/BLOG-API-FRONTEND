@@ -1,4 +1,15 @@
-import type { BlogPost, Comment, User, AuthResponse, PaginatedBlogs, LikeResponse, TagCount } from '../types/blog';
+import type {
+    BlogPost,
+    Comment,
+    User,
+    AuthResponse,
+    PaginatedBlogs,
+    LikeResponse,
+    TagCount,
+    BookmarkResponse,
+    UserProfileUpdatePayload,
+    UserProfileResponse,
+} from '../types/blog';
 
 // 1. The centralized base URL of your backend (supports local dev & production)
 const RAW_URL = import.meta.env.VITE_API_URL || 'https://blog-api-backend-mh0s.onrender.com';
@@ -280,4 +291,78 @@ export const getPopularTags = async (limit: number = 20): Promise<TagCount[]> =>
 
     const result = await response.json();
     return result.tags || [];
+};
+
+// 18. Update User Profile (Protected: Logged-in user)
+export const updateUserProfile = async (
+    payload: UserProfileUpdatePayload,
+    token: string
+): Promise<UserProfileResponse> => {
+    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update profile');
+    }
+    return result;
+};
+
+// 19. Toggle Bookmark on a Blog Post (Protected: Logged-in user)
+export const toggleBookmark = async (
+    blogId: string,
+    token: string
+): Promise<BookmarkResponse> => {
+    const response = await fetch(`${API_BASE_URL}/blogs/${blogId}/bookmark`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to toggle bookmark');
+    }
+    return result;
+};
+
+// 20. Fetch User's Saved / Bookmarked Articles (Protected: Logged-in user)
+export const getUserBookmarks = async (
+    token: string,
+    page: number = 1,
+    limit: number = 10
+): Promise<PaginatedBlogs> => {
+    const response = await fetch(
+        `${API_BASE_URL}/users/bookmarks?page=${page}&limit=${limit}`,
+        {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(`Failed to load bookmarks: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return {
+        data: result.data || [],
+        pagination: result.pagination || {
+            total: result.data?.length || 0,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+        },
+    };
 };

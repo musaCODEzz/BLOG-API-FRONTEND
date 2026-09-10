@@ -1,12 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { BlogPost } from '../types/blog';
+import { BookmarkButton } from './BookmarkButton';
 
 interface BlogCardProps {
   blog: BlogPost;
+  initialBookmarked?: boolean;
+  onBookmarkToggle?: (isBookmarked: boolean) => void;
 }
 
-export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
+export const BlogCard: React.FC<BlogCardProps> = ({
+  blog,
+  initialBookmarked,
+  onBookmarkToggle,
+}) => {
   const authorInitial = (blog.author?.name || 'A')[0].toUpperCase();
   const formattedDate = new Date(blog.createdAt).toLocaleDateString(undefined, {
     month: 'short',
@@ -39,11 +46,46 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
         </div>
       )}
 
+      {/* Metrics Row: Reading Time & Views */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
+        <span className="meta-metric" title="Estimated Reading Time">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>{blog.readTime || '1 min read'}</span>
+        </span>
+
+        <span style={{ color: 'var(--border-subtle)' }}>•</span>
+
+        <span className="meta-metric" title="Total Views">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span>{(blog.views || 0).toLocaleString()} views</span>
+        </span>
+      </div>
+
       <footer className="card-footer">
         <div className="author-chip">
-          <span className="author-avatar">{authorInitial}</span>
+          {blog.author?.avatar ? (
+            <img
+              src={blog.author.avatar}
+              alt={blog.author.name}
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            <span className="author-avatar">{authorInitial}</span>
+          )}
           <span className="author-name">{blog.author?.name || 'Anonymous'}</span>
         </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {(blog.likesCount !== undefined && blog.likesCount > 0) && (
             <span 
@@ -60,9 +102,18 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
               ❤️ {blog.likesCount}
             </span>
           )}
-          <time dateTime={blog.createdAt}>{formattedDate}</time>
+          
+          <time dateTime={blog.createdAt} style={{ fontSize: '0.8rem' }}>{formattedDate}</time>
+
+          <BookmarkButton
+            blogId={blog._id}
+            initialBookmarked={initialBookmarked}
+            size="sm"
+            onToggle={onBookmarkToggle}
+          />
         </div>
       </footer>
     </article>
   );
 };
+

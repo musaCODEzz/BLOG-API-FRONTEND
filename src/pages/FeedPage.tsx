@@ -72,9 +72,11 @@ export const FeedPage = () => {
           <h2 className="feed-title">
             {activeTag 
               ? `Articles in #${activeTag}` 
-              : sortBy === '-likesCount' 
-                ? '🔥 Most Popular Stories' 
-                : 'Recent Articles'}
+              : sortBy === '-views'
+                ? '👀 Most Viewed Stories'
+                : sortBy === '-likesCount' 
+                  ? '🔥 Most Popular Stories' 
+                  : 'Recent Articles'}
           </h2>
           {/* Shows total posts from MongoDB database! */}
           <span className="posts-count">
@@ -82,7 +84,7 @@ export const FeedPage = () => {
           </span>
         </div>
 
-        {/* Sort Switcher: Latest vs Popular */}
+        {/* Sort Switcher: Latest vs Popular vs Most Viewed */}
         <div className="feed-tabs">
           <button
             type="button"
@@ -107,6 +109,18 @@ export const FeedPage = () => {
             }}
           >
             <span>🔥</span> Popular
+          </button>
+          <button
+            type="button"
+            className={`feed-tab ${sortBy === '-views' ? 'active' : ''}`}
+            onClick={() => {
+              if (sortBy !== '-views') {
+                setSortBy('-views');
+                setPage(1);
+              }
+            }}
+          >
+            <span>👀</span> Most Viewed
           </button>
         </div>
       </div>

@@ -8,6 +8,8 @@ import { CreatePostPage } from './pages/CreatePostPage';
 import { EditPostPage } from './pages/EditPostPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { SavedArticlesPage } from './pages/SavedArticlesPage';
 import './App.css';
 
 const NavigationHeader = () => {
@@ -32,11 +34,11 @@ const NavigationHeader = () => {
         </div>
 
         {isAuthenticated ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Link
               to="/create"
               style={{
-                padding: '0.45rem 1rem',
+                padding: '0.45rem 0.9rem',
                 background: 'var(--accent-gradient)',
                 color: 'white',
                 borderRadius: '6px',
@@ -51,7 +53,32 @@ const NavigationHeader = () => {
               <span>+</span> Write Story
             </Link>
 
-            <div className="author-chip" title={user?.email}>
+            <Link
+              to="/bookmarks"
+              style={{
+                padding: '0.45rem 0.85rem',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+              }}
+              title="Saved Reading List"
+            >
+              <span>🔖</span> Saved
+            </Link>
+
+            <Link
+              to="/profile"
+              className="author-chip"
+              title={`View Profile: ${user?.email}`}
+              style={{ textDecoration: 'none', cursor: 'pointer' }}
+            >
               {user?.avatar ? (
                 <img
                   src={user.avatar}
@@ -67,7 +94,7 @@ const NavigationHeader = () => {
                 <span className="author-avatar">{userInitial}</span>
               )}
               <span className="author-name">{user?.name}</span>
-            </div>
+            </Link>
 
             <button
               onClick={logout}
@@ -138,6 +165,8 @@ function App() {
           <Route path="/edit/:id" element={<EditPostPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/bookmarks" element={<SavedArticlesPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

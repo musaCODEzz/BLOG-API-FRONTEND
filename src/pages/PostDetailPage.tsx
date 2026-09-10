@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import type { BlogPost, Comment } from '../types/blog';
 import { getBlogPostById, getCommentsByBlogId, addComment, deleteBlog, deleteComment, updateComment, likeBlogPost } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { BookmarkButton } from '../components/BookmarkButton';
 
 export const PostDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -269,21 +270,44 @@ export const PostDetailPage = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="author-avatar">{authorInitial}</span>
+            {post.author?.avatar ? (
+              <img
+                src={post.author.avatar}
+                alt={post.author.name}
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <span className="author-avatar">{authorInitial}</span>
+            )}
             <div>
               <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                 {post.author?.name || 'Anonymous'}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.15rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
                 <time style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                   Published on {formattedDate}
                 </time>
+                <span style={{ color: 'var(--border-subtle)' }}>•</span>
+                <span className="meta-metric" title="Estimated Reading Time">
+                  ⏱️ {post.readTime || '1 min read'}
+                </span>
+                <span style={{ color: 'var(--border-subtle)' }}>•</span>
+                <span className="meta-metric" title="Total Views">
+                  👀 {(post.views || 0).toLocaleString()} views
+                </span>
+                <span style={{ color: 'var(--border-subtle)' }}>•</span>
                 <span style={{ fontSize: '0.8rem', color: isLiked ? '#f43f5e' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                   {isLiked ? '❤️' : '🤍'} {likesCount} {likesCount === 1 ? 'like' : 'likes'}
                 </span>
               </div>
             </div>
           </div>
+
 
           {/* Author Actions: Edit & Delete Story */}
           {isBlogAuthor && (
@@ -455,6 +479,8 @@ export const PostDetailPage = () => {
             <span>{copiedLink ? '✅' : '🔗'}</span>
             <span>{copiedLink ? 'Link Copied!' : 'Share'}</span>
           </button>
+
+          <BookmarkButton blogId={post._id} showText={true} />
         </div>
 
         {/* Unauthenticated notification hint */}
@@ -467,6 +493,49 @@ export const PostDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* Author Bio Card */}
+      {post.author && (post.author.bio || post.author.website || post.author.github || post.author.twitter) && (
+        <div className="author-bio-card">
+          {post.author.avatar ? (
+            <img src={post.author.avatar} alt={post.author.name} className="author-bio-avatar" />
+          ) : (
+            <div className="author-bio-avatar-fallback">{authorInitial}</div>
+          )}
+          <div className="author-bio-details">
+            <div className="author-bio-name">About {post.author.name}</div>
+            {post.author.bio && <p className="author-bio-text">{post.author.bio}</p>}
+            <div className="author-social-links">
+              {post.author.website && (
+                <a href={post.author.website} target="_blank" rel="noopener noreferrer" className="author-social-link">
+                  🌐 Website
+                </a>
+              )}
+              {post.author.github && (
+                <a
+                  href={`https://github.com/${post.author.github.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="author-social-link"
+                >
+                  🐙 GitHub
+                </a>
+              )}
+              {post.author.twitter && (
+                <a
+                  href={`https://twitter.com/${post.author.twitter.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="author-social-link"
+                >
+                  🐦 Twitter
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Discussion & Comments Section */}
       <section id="discussion" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '2.5rem' }}>

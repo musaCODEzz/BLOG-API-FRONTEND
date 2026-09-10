@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   loginWithGoogleAuth: (credential: string) => Promise<void>;
+  updateUser: (updatedUser: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -49,7 +50,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('user', JSON.stringify(data.user));
   };
 
-  // 5. Logout function: clears state and localStorage
+  // 5. Update user state and persist in localStorage
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  // 6. Logout function: clears state and localStorage
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -65,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         loginWithGoogleAuth,
+        updateUser,
         logout,
         isAuthenticated: !!token,
       }}
